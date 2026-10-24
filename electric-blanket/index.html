@@ -7,7 +7,7 @@
 <meta name="description" content="소비전력, 하루 사용시간, 우리 집 월 사용량을 넣으면 전기장판으로 늘어나는 전기요금과 누진 단계를 바로 계산해요. 2026년 10월 한전 요금 기준.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="전기장판 전기세 계산기 | 우리 집 누진 구간까지 한 번에">
-<meta property="og:description" content="200W 하루 8시간이면 한 달 7,310원~17,540원. 우리 집 사용량을 넣고 직접 계산해 보세요. (2026년 10월 한전 요금 기준)">
+<meta property="og:description" content="200W 하루 8시간이면 한 달 7,250원~17,380원. 우리 집 사용량을 넣고 직접 계산해 보세요. (2026년 10월 한전 요금 기준)">
 <meta property="og:image" content="https://tools.letstore.co.kr/electric-blanket/og.png">
 <meta property="og:url" content="https://tools.letstore.co.kr/electric-blanket/">
 <style>
@@ -214,7 +214,7 @@
 
   <section class="card" id="sec-unit">
     <h2>⑤ 1kWh 요금은 왜 120원이 아닐까요?</h2>
-    <p class="desc">전력량 요금에 기후환경요금 9원, 연료비조정요금 5원이 더해지고, 부가세 10%와 전력산업기반기금 3.7%가 붙어요.</p>
+    <p class="desc">전력량 요금에 기후환경요금 9원, 연료비조정요금 5원이 더해지고, 부가세 10%와 전력산업기반기금 2.7%가 붙어요.</p>
     <div class="chart-box"><canvas id="chartUnit" role="img" aria-label="누진 구간별 1kWh 요금 구성 누적 막대그래프"></canvas></div>
     <details><summary>표로 보기</summary><table id="tblUnit"></table></details>
   </section>
@@ -264,7 +264,7 @@
 
   <footer>
     <p>출처: 한전 주택용 저압 전기요금표(기본요금 910·1,600·7,300원, 전력량요금 120.0·214.6·307.3원/kWh), 기후환경요금 9원/kWh, 2026년 4분기 연료비조정단가 +5원/kWh(2026-09-21 발표, 동결).
-    부가세 10%, 전력산업기반기금 3.7%(10원 미만 절사), 청구액 10원 미만 절사로 계산했어요. 복지 할인, 대가족 할인 등은 반영하지 않았어요.
+    부가세 10%, 전력산업기반기금 2.7%(2025년 7월부터, 10원 미만 절사), 청구액 10원 미만 절사로 계산했어요. 복지 할인, 대가족 할인 등은 반영하지 않았어요.
     정확한 요금은 <a href="https://online.kepco.co.kr" target="_blank" rel="noopener">한전ON</a>에서 확인하세요.</p>
   </footer>
 </div>
@@ -279,7 +279,7 @@ const RATE = {
   climate: 9,
   fuel: 5,
   vat: 0.10,
-  fund: 0.037,
+  fund: 0.027,
 };
 const floor10 = (x) => Math.floor(x / 10) * 10;
 
