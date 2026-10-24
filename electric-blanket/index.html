@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>전기장판 전기세 계산기</title>
+<meta name="description" content="소비전력, 하루 사용시간, 우리 집 월 사용량을 넣으면 전기장판으로 늘어나는 전기요금과 누진 단계를 바로 계산해요. 2026년 10월 한전 요금 기준.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="전기장판 전기세 계산기 | 우리 집 누진 구간까지 한 번에">
+<meta property="og:description" content="200W 하루 8시간이면 한 달 7,310원~17,540원. 우리 집 사용량을 넣고 직접 계산해 보세요. (2026년 10월 한전 요금 기준)">
+<meta property="og:image" content="https://jiung4u-spec.github.io/calculators/electric-blanket/og.png">
+<meta property="og:url" content="https://jiung4u-spec.github.io/calculators/electric-blanket/">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface-1: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --tier-1: #86b6ef;
+    --tier-2: #2a78d6;
+    --tier-3: #104281;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --critical: #d03b3b;
+    --accent-bg: #fff4ec;
+    --ad-bg: #fdecec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface-1: #1a1a19;
+      --text-primary: #f0efec;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --axis: #383835;
+      --border: rgba(255,255,255,0.10);
+      --tier-1: #9ec5f4;
+      --tier-2: #3987e5;
+      --tier-3: #184f95;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --accent-bg: #2a1d15;
+      --ad-bg: #2b1717;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255,255,255,0.10);
+    --tier-1: #9ec5f4;
+    --tier-2: #3987e5;
+    --tier-3: #184f95;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --accent-bg: #2a1d15;
+    --ad-bg: #2b1717;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+  .ad {
+    background: var(--ad-bg);
+    border-left: 4px solid var(--critical);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  header h1 { font-size: 28px; line-height: 1.3; margin: 24px 0 8px; }
+  header p { color: var(--text-secondary); margin: 0; }
+  .basis { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0; }
+  .tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .tile .label { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+  .tile .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .tile .value { font-size: 30px; font-weight: 800; margin-top: 4px; }
+  .tile .sub { font-size: 12px; color: var(--text-muted); }
+
+  section.card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  section.card h2 { font-size: 20px; margin: 0 0 4px; }
+  section.card .desc { color: var(--text-secondary); margin: 0 0 16px; font-size: 15px; }
+  .chart-box { position: relative; height: 320px; }
+  .formula {
+    font-size: 20px; font-weight: 700; text-align: center;
+    padding: 16px; border-radius: 10px; background: var(--accent-bg);
+  }
+  .callout {
+    margin-top: 16px; padding: 12px 16px; border-radius: 8px;
+    background: var(--accent-bg); font-size: 15px;
+  }
+  details { margin-top: 12px; font-size: 14px; }
+  summary { cursor: pointer; color: var(--text-secondary); }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 14px; }
+  th, td { border-bottom: 1px solid var(--grid); padding: 8px; text-align: right; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 600; }
+
+  .calc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .calc label { font-size: 14px; color: var(--text-secondary); display: block; }
+  .calc input {
+    width: 100%; font-size: 18px; padding: 8px 10px; margin-top: 4px;
+    border: 1px solid var(--axis); border-radius: 8px;
+    background: var(--page); color: var(--text-primary);
+  }
+  .calc-result { margin-top: 16px; font-size: 18px; }
+  .calc-result strong { font-size: 28px; }
+  .warn-tier { color: var(--critical); font-weight: 700; }
+
+  ul.check { padding-left: 20px; margin: 0; }
+  ul.check li { margin: 6px 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .btn {
+    display: inline-block; padding: 10px 16px; border-radius: 8px;
+    border: 1px solid var(--axis); color: var(--text-primary);
+    text-decoration: none; font-weight: 600;
+  }
+  footer { font-size: 12px; color: var(--text-muted); margin-top: 24px; }
+  footer a { color: var(--text-secondary); }
+
+  @media (max-width: 640px) {
+    .tiles, .calc, .grid2 { grid-template-columns: 1fr; }
+    header h1 { font-size: 23px; }
+    .chart-box { height: 280px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header id="sec-hero">
+    <h1>전기장판 전기세 계산기</h1>
+    <p>소비전력과 우리 집 누진 구간만 알면 바로 계산돼요.</p>
+    <div class="basis">2026년 10월 기준 · 한전 주택용 저압 요금(7·8월 제외) · 하루 8시간 × 30일 · 표시 소비전력 그대로 켜 둔 최대치</div>
+  </header>
+
+  <div class="tiles" id="sec-tiles"></div>
+
+
+  <section class="card" id="sec-calc">
+    <h2>🧮 우리 집 전기세 계산기</h2>
+    <p class="desc">지난달 사용량은 한전ON 앱이나 전기요금 고지서에서 확인할 수 있어요.</p>
+    <div class="calc">
+      <label>소비전력 (W)<input id="inW" type="number" min="10" max="1000" step="10" value="200"></label>
+      <label>하루 사용시간<input id="inH" type="number" min="1" max="24" step="1" value="8"></label>
+      <label>평소 월 사용량 (kWh)<input id="inBase" type="number" min="0" max="1500" step="10" value="300"></label>
+    </div>
+    <div class="calc-result" id="calcResult"></div>
+  </section>
+
+  <section class="card" id="sec-formula">
+    <h2>① 계산법은 한 줄이에요</h2>
+    <p class="desc">소비전력은 제품 라벨의 "정격 소비전력(W)"을 보면 돼요.</p>
+    <div class="formula">소비전력(W) × 하루 사용시간 × 30일 ÷ 1,000 = 한 달 사용량(kWh)</div>
+    <p class="desc" style="margin-top:12px">예) 200W × 8시간 × 30일 ÷ 1,000 = <strong>48kWh</strong></p>
+  </section>
+
+  <section class="card" id="sec-products">
+    <h2>② 제품별 한 달 전기세</h2>
+    <p class="desc">같은 제품이라도 우리 집이 어느 누진 구간인지에 따라 2배 넘게 차이 나요.</p>
+    <div class="chart-box"><canvas id="chartProducts" role="img" aria-label="제품별 누진 구간별 한 달 전기세 막대그래프"></canvas></div>
+    <details><summary>표로 보기</summary><table id="tblProducts"></table></details>
+  </section>
+
+  <section class="card" id="sec-hours">
+    <h2>③ 사용시간별 전기세 (200W 기준)</h2>
+    <p class="desc">타이머로 하루 8시간을 4시간으로 줄이면 전기세도 절반이 돼요.</p>
+    <div class="chart-box"><canvas id="chartHours" role="img" aria-label="하루 사용시간별 한 달 전기세 선그래프"></canvas></div>
+    <details><summary>표로 보기</summary><table id="tblHours"></table></details>
+  </section>
+
+  <section class="card" id="sec-trap">
+    <h2>④ 진짜 함정은 누진 구간이에요</h2>
+    <p class="desc">200W 전기장판을 하루 8시간(48kWh) 더 쓸 때, 우리 집 평소 사용량에 따라 늘어나는 전기요금이에요.</p>
+    <div class="chart-box"><canvas id="chartTrap" role="img" aria-label="평소 월 사용량별 전기장판 추가 요금 그래프"></canvas></div>
+    <div class="callout" id="trapCallout"></div>
+    <details><summary>표로 보기</summary><table id="tblTrap"></table></details>
+  </section>
+
+  <section class="card" id="sec-unit">
+    <h2>⑤ 1kWh 요금은 왜 120원이 아닐까요?</h2>
+    <p class="desc">전력량 요금에 기후환경요금 9원, 연료비조정요금 5원이 더해지고, 부가세 10%와 전력산업기반기금 3.7%가 붙어요.</p>
+    <div class="chart-box"><canvas id="chartUnit" role="img" aria-label="누진 구간별 1kWh 요금 구성 누적 막대그래프"></canvas></div>
+    <details><summary>표로 보기</summary><table id="tblUnit"></table></details>
+  </section>
+
+  <section class="card" id="sec-compare">
+    <h2>⑥ 전기장판 · 카본매트 · 온수매트 비교</h2>
+    <table>
+      <thead><tr><th>종류</th><th style="text-align:left">방식</th><th style="text-align:left">좋은 점</th><th style="text-align:left">아쉬운 점</th></tr></thead>
+      <tbody>
+        <tr><td>전기장판·전기요</td><td style="text-align:left">열선이 바로 발열</td><td style="text-align:left">값이 싸고 빨리 따뜻해짐</td><td style="text-align:left">접히면 열선 손상 위험</td></tr>
+        <tr><td>카본매트</td><td style="text-align:left">탄소 열선 발열</td><td style="text-align:left">얇고 가벼움, 고르게 따뜻함</td><td style="text-align:left">일반 장판보다 비싼 편</td></tr>
+        <tr><td>온수매트</td><td style="text-align:left">데운 물이 순환</td><td style="text-align:left">열이 은은하고 고름</td><td style="text-align:left">소비전력이 큰 편, 물 관리 필요</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card" id="sec-tips">
+    <div class="grid2">
+      <div>
+        <h2>⑧ 전기세 줄이는 5가지</h2>
+        <ul class="check">
+          <li>처음 30분만 높게, 그다음은 <strong>낮은 온도</strong></li>
+          <li><strong>타이머 2~4시간</strong> 걸기</li>
+          <li>장판 위에 <strong>이불 덮기</strong></li>
+          <li>보일러 1~2도 낮추고 <strong>잠자리만</strong> 데우기</li>
+          <li>외출할 때 <strong>플러그 뽑기</strong></li>
+        </ul>
+      </div>
+      <div>
+        <h2>⑨ 꺼내자마자 안전 점검</h2>
+        <ul class="check">
+          <li>접힌 자국·탄 자국이 있으면 쓰지 않기</li>
+          <li>전원선·조절기 갈라짐 확인</li>
+          <li>접은 상태로 켜지 않기</li>
+          <li>높은 온도에 오래 닿으면 <strong>저온화상</strong> 주의</li>
+          <li>살 때는 <strong>KC 인증·소비전력·타이머</strong> 확인</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="sec-links">
+    <h2>더 자세한 설명은 블로그에서</h2>
+    <p class="desc">전기장판 고르는 법, 안전 점검, 자주 묻는 질문까지 정리했어요.</p>
+    <div class="btns"><a class="btn" href="https://blog.naver.com/wineman" target="_blank" rel="noopener">블로그에서 보기</a></div>
+  </section>
+
+  <footer>
+    <p>출처: 한전 주택용 저압 전기요금표(기본요금 910·1,600·7,300원, 전력량요금 120.0·214.6·307.3원/kWh), 기후환경요금 9원/kWh, 2026년 4분기 연료비조정단가 +5원/kWh(2026-09-21 발표, 동결).
+    부가세 10%, 전력산업기반기금 3.7%(10원 미만 절사), 청구액 10원 미만 절사로 계산했어요. 복지 할인, 대가족 할인 등은 반영하지 않았어요.
+    정확한 요금은 <a href="https://online.kepco.co.kr" target="_blank" rel="noopener">한전ON</a>에서 확인하세요.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ── 요금 계산 (주택용 저압, 7·8월 제외) ──
+const RATE = {
+  base: [910, 1600, 7300],
+  unit: [120.0, 214.6, 307.3],
+  limits: [200, 400],
+  climate: 9,
+  fuel: 5,
+  vat: 0.10,
+  fund: 0.037,
+};
+const floor10 = (x) => Math.floor(x / 10) * 10;
+
+function monthlyBill(kwh) {
+  const [l1, l2] = RATE.limits;
+  const tier = kwh <= l1 ? 0 : kwh <= l2 ? 1 : 2;
+  const energy =
+    Math.min(kwh, l1) * RATE.unit[0] +
+    Math.max(0, Math.min(kwh, l2) - l1) * RATE.unit[1] +
+    Math.max(0, kwh - l2) * RATE.unit[2];
+  const base = RATE.base[tier];
+  const sub = Math.floor(base + energy + kwh * (RATE.climate + RATE.fuel));
+  const vat = Math.round(sub * RATE.vat);
+  const fund = floor10(sub * RATE.fund);
+  return { total: floor10(sub + vat + fund), tier: tier + 1 };
+}
+
+// 구간별 kWh당 실제 단가 (세금·기금 포함)
+const marginal = RATE.unit.map((u) => (u + RATE.climate + RATE.fuel) * (1 + RATE.vat + RATE.fund));
+const costAt = (kwh, tierIdx) => Math.round((kwh * marginal[tierIdx]) / 10) * 10;
+
+const PRODUCTS = [
+  { name: "1인용 전기요", w: 100 },
+  { name: "더블 장판·카본매트", w: 200 },
+  { name: "더블 온수매트", w: 300 },
+];
+const TIERS = ["1단계 (200kWh 이하)", "2단계 (201~400kWh)", "3단계 (400kWh 초과)"];
+const TIER_SHORT = ["1단계", "2단계", "3단계"];
+const kwhOf = (w, h) => (w * h * 30) / 1000;
+const won = (n) => n.toLocaleString("ko-KR") + "원";
+
+// ── 색: CSS 토큰에서 읽기 ──
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const C = () => ({
+  tier: [css("--tier-1"), css("--tier-2"), css("--tier-3")],
+  s1: css("--series-1"), s2: css("--series-2"), s3: css("--series-3"),
+  text: css("--text-primary"), text2: css("--text-secondary"), muted: css("--text-muted"),
+  grid: css("--grid"), axis: css("--axis"), surface: css("--surface-1"), critical: css("--critical"),
+});
+
+// ── 핵심 숫자 카드 ──
+function renderTiles() {
+  const c = C();
+  const kwh = kwhOf(200, 8);
+  document.getElementById("sec-tiles").innerHTML = [0, 1, 2].map((t) => `
+    <div class="tile">
+      <div class="label"><span class="swatch" style="background:${c.tier[t]}"></span>${TIERS[t]} 집</div>
+      <div class="value">${won(costAt(kwh, t))}</div>
+      <div class="sub">200W · 하루 8시간 · 한 달</div>
+    </div>`).join("");
+}
+
+// ── 표 그리기 ──
+function table(id, head, rows) {
+  document.getElementById(id).innerHTML =
+    `<thead><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr></thead>` +
+    `<tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${v}</td>`).join("")}</tr>`).join("")}</tbody>`;
+}
+
+let charts = [];
+function baseOptions(c, yTitle) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 900 },
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { position: "top", align: "start", labels: { color: c.text2, boxWidth: 12, boxHeight: 12, usePointStyle: true, pointStyle: "rectRounded" } },
+      tooltip: {
+        backgroundColor: c.surface, titleColor: c.text, bodyColor: c.text2,
+        borderColor: c.axis, borderWidth: 1, padding: 10,
+        callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${won(ctx.parsed.y ?? ctx.parsed.x)}` },
+      },
+    },
+    scales: {
+      x: { grid: { display: false }, border: { color: c.axis }, ticks: { color: c.muted } },
+      y: {
+        beginAtZero: true, grid: { color: c.grid }, border: { display: false },
+        ticks: { color: c.muted, callback: (v) => v.toLocaleString("ko-KR") },
+        title: { display: !!yTitle, text: yTitle, color: c.muted },
+      },
+    },
+  };
+}
+
+function renderCharts() {
+  charts.forEach((ch) => ch.destroy());
+  charts = [];
+  const c = C();
+  Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif';
+
+  // ② 제품별
+  const prodData = [0, 1, 2].map((t) => PRODUCTS.map((p) => costAt(kwhOf(p.w, 8), t)));
+  charts.push(new Chart(document.getElementById("chartProducts"), {
+    type: "bar",
+    data: {
+      labels: PRODUCTS.map((p) => `${p.name} (${p.w}W)`),
+      datasets: [0, 1, 2].map((t) => ({
+        label: TIERS[t], data: prodData[t], backgroundColor: c.tier[t],
+        borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: "bottom",
+        borderColor: c.surface, borderWidth: { left: 2, right: 2 }, maxBarThickness: 48,
+      })),
+    },
+    options: baseOptions(c, "원 / 월"),
+  }));
+  table("tblProducts", ["제품", ...TIER_SHORT], PRODUCTS.map((p, i) => [`${p.name} (${p.w}W)`, ...[0, 1, 2].map((t) => won(prodData[t][i]))]));
+
+  // ③ 사용시간별
+  const hours = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const hourData = [0, 1, 2].map((t) => hours.map((h) => costAt(kwhOf(200, h), t)));
+  const hOpt = baseOptions(c, "원 / 월");
+  hOpt.scales.x.title = { display: true, text: "하루 사용시간", color: c.muted };
+  charts.push(new Chart(document.getElementById("chartHours"), {
+    type: "line",
+    data: {
+      labels: hours.map((h) => h + "시간"),
+      datasets: [0, 1, 2].map((t) => ({
+        label: TIERS[t], data: hourData[t], borderColor: c.tier[t], backgroundColor: c.tier[t],
+        borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, pointHoverBorderColor: c.surface, pointHoverBorderWidth: 2, tension: 0,
+      })),
+    },
+    options: hOpt,
+  }));
+  table("tblHours", ["하루", ...TIER_SHORT], hours.map((h, i) => [h + "시간", ...[0, 1, 2].map((t) => won(hourData[t][i]))]));
+
+  // ④ 누진 함정: 평소 사용량별 추가 요금
+  const add = kwhOf(200, 8);
+  const bases = [];
+  for (let b = 100; b <= 600; b += 10) bases.push(b);
+  const extra = bases.map((b) => monthlyBill(b + add).total - monthlyBill(b).total);
+  const peakIdx = extra.indexOf(Math.max(...extra));
+  const tOpt = baseOptions(c, "늘어나는 요금 (원 / 월)");
+  tOpt.scales.x.title = { display: true, text: "우리 집 평소 월 사용량 (kWh)", color: c.muted };
+  tOpt.scales.x.ticks.maxTicksLimit = 11;
+  tOpt.plugins.legend.display = false;
+  tOpt.plugins.tooltip.callbacks = {
+    title: (items) => `평소 ${items[0].label}kWh → ${Number(items[0].label) + add}kWh`,
+    label: (ctx) => ` 전기장판으로 늘어나는 요금: ${won(ctx.parsed.y)}`,
+  };
+  charts.push(new Chart(document.getElementById("chartTrap"), {
+    type: "line",
+    data: {
+      labels: bases,
+      datasets: [{
+        label: "늘어나는 요금", data: extra, borderColor: c.s2, backgroundColor: c.s2, borderWidth: 2, stepped: false,
+        pointRadius: bases.map((_, i) => (i === peakIdx ? 6 : 0)), pointBackgroundColor: c.s2,
+        pointBorderColor: c.surface, pointBorderWidth: 2, pointHoverRadius: 5, tension: 0,
+      }],
+    },
+    options: tOpt,
+  }));
+  const pb = bases[peakIdx];
+  const zoneStart = RATE.limits[1] - add + 1;
+  document.getElementById("trapCallout").innerHTML =
+    `⚠️ 평소 <strong>${zoneStart}~${RATE.limits[1]}kWh</strong> 쓰는 집은 48kWh를 더하면 400kWh를 넘어 <strong>3단계</strong>가 돼요. ` +
+    `기본요금이 1,600원 → 7,300원으로 바뀌면서, ${pb}kWh 집은 전기장판값으로만 <strong>${won(extra[peakIdx])}</strong>이 늘어요. ` +
+    `같은 장판인데 평소 150kWh 쓰는 집은 <strong>${won(extra[bases.indexOf(150)])}</strong>만 늘어요.`;
+  table("tblTrap", ["평소 사용량", "장판 포함", "늘어나는 요금"],
+    bases.filter((b) => b % 50 === 0 || b === pb).map((b) => [b + "kWh", b + add + "kWh", won(extra[bases.indexOf(b)])]));
+
+  // ⑤ 1kWh 요금 구성
+  const parts = [0, 1, 2].map((t) => {
+    const e = RATE.unit[t], cf = RATE.climate + RATE.fuel;
+    return { e, cf, tax: (e + cf) * (RATE.vat + RATE.fund) };
+  });
+  const uOpt = baseOptions(c, "원 / kWh");
+  uOpt.indexAxis = "y";
+  uOpt.scales = {
+    x: { stacked: true, beginAtZero: true, grid: { color: c.grid }, border: { display: false }, ticks: { color: c.muted } },
+    y: { stacked: true, grid: { display: false }, border: { color: c.axis }, ticks: { color: c.text2 } },
+  };
+  uOpt.interaction = { mode: "nearest", intersect: true };
+  uOpt.plugins.tooltip.callbacks = { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.x.toFixed(1)}원` };
+  uOpt.layout = { padding: { right: 70 } };
+  const segs = [
+    { label: "전력량요금", key: "e", color: c.s1 },
+    { label: "기후환경 + 연료비조정", key: "cf", color: c.s2 },
+    { label: "부가세 + 기금", key: "tax", color: c.s3 },
+  ];
+  charts.push(new Chart(document.getElementById("chartUnit"), {
+    type: "bar",
+    data: {
+      labels: TIER_SHORT,
+      datasets: segs.map((s) => ({
+        label: s.label, data: parts.map((p) => p[s.key]), backgroundColor: s.color,
+        borderColor: c.surface, borderWidth: { right: 2 }, borderSkipped: false, maxBarThickness: 40,
+      })),
+    },
+    options: uOpt,
+    plugins: [{
+      id: "totals",
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(segs.length - 1);
+        ctx.save();
+        ctx.fillStyle = c.text;
+        ctx.font = "600 13px system-ui, sans-serif";
+        ctx.textBaseline = "middle";
+        meta.data.forEach((bar, i) => ctx.fillText(`약 ${Math.round(marginal[i])}원`, bar.x + 8, bar.y));
+        ctx.restore();
+      },
+    }],
+  }));
+  table("tblUnit", ["구간", "전력량요금", "기후·연료비", "부가세·기금", "합계"],
+    parts.map((p, i) => [TIER_SHORT[i], p.e.toFixed(1) + "원", p.cf + "원", p.tax.toFixed(1) + "원", "약 " + Math.round(marginal[i]) + "원"]));
+}
+
+// ── 계산기 ──
+function renderCalc() {
+  const w = +document.getElementById("inW").value || 0;
+  const h = +document.getElementById("inH").value || 0;
+  const base = +document.getElementById("inBase").value || 0;
+  const add = kwhOf(w, h);
+  const before = monthlyBill(base), after = monthlyBill(base + add);
+  const diff = after.total - before.total;
+  const tierMsg = after.tier > before.tier
+    ? ` <span class="warn-tier">⚠️ ${before.tier}단계 → ${after.tier}단계로 올라가요!</span>`
+    : ` (${after.tier}단계 유지)`;
+  document.getElementById("calcResult").innerHTML =
+    `전기장판으로 한 달 <strong>${add.toLocaleString("ko-KR")}kWh</strong>를 더 써서 ` +
+    `전기요금이 <strong>${won(diff)}</strong> 늘어요.${tierMsg}<br>` +
+    `<span style="font-size:14px;color:var(--text-muted)">예상 청구액: ${won(before.total)} → ${won(after.total)} (최대치 기준)</span>`;
+}
+["inW", "inH", "inBase"].forEach((id) => document.getElementById(id).addEventListener("input", renderCalc));
+
+// 캡처·녹화 도구가 __CAPTURE__를 켜면 애니메이션 없이 최종 상태로 그린다
+if (window.__CAPTURE__) Chart.defaults.animation = false;
+
+function renderAll() { renderTiles(); renderCharts(); renderCalc(); }
+renderAll();
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+</script>
+</body>
+</html>
